@@ -6,6 +6,17 @@ def estimate_tokens(text: str) -> int:
     return max(1, int(words * 1.3))
 
 
+def split_at_boundaries(text: str, chunk_size: int = 400, overlap: int = 50) -> list[str]:
+    """Split on explicit sensitivity boundaries (---) then recursive split each segment."""
+    segments = [seg.strip() for seg in text.split("\n---\n") if seg.strip()]
+    if len(segments) <= 1:
+        return split_text(text, chunk_size, overlap)
+    out: list[str] = []
+    for seg in segments:
+        out.extend(split_text(seg, chunk_size, overlap))
+    return out
+
+
 def split_text(text: str, chunk_size: int = 400, overlap: int = 50) -> list[str]:
     """Recursive split mirroring MVP chunking (paragraph → line → sentence → word)."""
     text = text.strip()

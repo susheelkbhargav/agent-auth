@@ -209,6 +209,35 @@
           }
         ]
       }
+    },
+    {
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "mixed-chart1",
+        "status": "current",
+        "subject": {
+          "reference": "Patient/bob"
+        },
+        "meta": {
+          "security": [
+            {
+              "code": "R"
+            }
+          ]
+        },
+        "type": {
+          "text": "Combined Chart"
+        },
+        "description": "Lab + provider note (sensitivity boundary demo)",
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "UGF0aWVudCBsYWIgcmVzdWx0cyBzaG93IG5vcm1hbCBnbHVjb3NlIGFuZCBzdGFibGUga2lkbmV5IGZ1bmN0aW9uLgotLS0KUHJvdmlkZXIgcHJpdmF0ZSBub3RlOiBwYXRpZW50IEJvYiBleHByZXNzZWQgYW54aWV0eSBhYm91dCB0cmVhdG1lbnQgcGxhbi4="
+            }
+          }
+        ]
+      }
     }
   ]
 }

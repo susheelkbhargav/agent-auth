@@ -60,6 +60,42 @@ func TestSQLiteRetriever_PrefilterTopK(t *testing.T) {
 	}
 }
 
+func TestSQLiteRetriever_ExpandParentDocs_ReGate(t *testing.T) {
+	t.Parallel()
+
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+
+	seedChunkWithParent(t, db, "lab-a", "doc-1", unitVec(0, 1.0), 100, "lab")
+	seedChunkWithParent(t, db, "lab-b", "doc-1", unitVec(0, 0.8), 90, "lab")
+	seedChunkWithParent(t, db, "phi-x", "doc-1", unitVec(1, 1.0), 200, "phi")
+
+	ret := retrieve.NewSQLiteRetriever(db.SQL)
+	ctx := context.Background()
+	hits := []retrieve.Chunk{
+		{ID: "lab-a", ParentDocID: "doc-1", TokenCount: 100, RequiredLabels: labelvocab.New("lab")},
+	}
+
+	expanded, err := ret.ExpandParentDocs(ctx, hits, labelvocab.New("lab"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(expanded) != 2 {
+		t.Fatalf("lab eff got %d chunks, want 2 (lab-a + lab-b)", len(expanded))
+	}
+
+	expandedAll, err := ret.ExpandParentDocs(ctx, hits, labelvocab.New("lab", "phi"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(expandedAll) != 3 {
+		t.Fatalf("lab+phi eff got %d chunks, want 3 siblings", len(expandedAll))
+	}
+}
+
 func TestSQLiteRetriever_ShadowTopK(t *testing.T) {
 	t.Parallel()
 
@@ -86,14 +122,18 @@ func TestSQLiteRetriever_ShadowTopK(t *testing.T) {
 }
 
 func seedChunk(t *testing.T, db *store.DB, id string, emb []float32, tokens int, labels ...string) {
+	seedChunkWithParent(t, db, id, "", emb, tokens, labels...)
+}
+
+func seedChunkWithParent(t *testing.T, db *store.DB, id, parent string, emb []float32, tokens int, labels ...string) {
 	t.Helper()
 	blob, err := sqlite_vec.SerializeFloat32(emb)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := db.SQL.Exec(
-		`INSERT INTO chunks (id, text, parent_doc_id, token_count, corpus) VALUES (?, ?, '', ?, 'test')`,
-		id, "text-"+id, tokens,
+		`INSERT INTO chunks (id, text, parent_doc_id, token_count, corpus) VALUES (?, ?, ?, ?, 'test')`,
+		id, "text-"+id, parent, tokens,
 	); err != nil {
 		t.Fatal(err)
 	}

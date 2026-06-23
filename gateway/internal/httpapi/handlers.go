@@ -96,6 +96,11 @@ func (s *Server) handleRetrieve(w http.ResponseWriter, r *http.Request) {
 		writeUnifiedRefusal(w)
 		return
 	}
+	auth, err = retrieve.ExpandParentDocs(s.Retriever, r.Context(), auth, eff)
+	if err != nil {
+		writeUnifiedRefusal(w)
+		return
+	}
 
 	if len(auth) == 0 {
 		m := meter.Compute(shadow, auth, eff, route.Refuse, meter.TierForShadow(shadow))

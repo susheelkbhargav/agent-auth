@@ -4,14 +4,14 @@ import base64
 import json
 from pathlib import Path
 
-from ingestlib.chunker import estimate_tokens, split_text
-from ingestlib.labeler import merge_labels, presidio_phi_labels, synthea_base_labels
+from ingestlib.chunker import estimate_tokens, split_at_boundaries
+from ingestlib.labeler import merge_labels, presidio_phi_labels, synthea_base_labels, wikidoc_topic_labels
 from ingestlib.models import ChunkRecord, IngestBatch, RoleGrant
 
 _DATA = Path(__file__).resolve().parent / "data" / "demo_fhir_bundle.json"
 
-# Demo arc role grants (Synthea-derived; matches cmd/keygen demo agents).
-_ROLE_LABELS: dict[str, list[str]] = {
+# External join: FHIR gives role names; policy maps role → granted labels (EHR ACL export).
+_ROLE_GRANT_POLICY: dict[str, list[str]] = {
     "provider": ["phi", "prescription", "lab", "note:provider"],
     "billing": ["billing", "scheduling"],
 }
@@ -21,19 +21,41 @@ def load_synthea(bundle_path: Path | None = None, presidio_analyzer=None) -> Ing
     path = bundle_path or _DATA
     bundle = json.loads(path.read_text())
     batch = IngestBatch()
-
-    for role, labels in _ROLE_LABELS.items():
-        for label in labels:
-            batch.role_grants.append(RoleGrant(role=role, label=label))
+    batch.role_grants.extend(_role_grants_from_bundle(bundle))
 
     for entry in bundle.get("entry", []):
         resource = entry.get("resource", {})
         rtype = resource.get("resourceType")
         if rtype == "DocumentReference":
-            batch.chunks.extend(
-                _chunks_from_document(resource, presidio_analyzer)
-            )
+            batch.chunks.extend(_chunks_from_document(resource, presidio_analyzer))
     return batch
+
+
+def _roles_from_bundle(bundle: dict) -> set[str]:
+    roles: set[str] = set()
+    for entry in bundle.get("entry", []):
+        resource = entry.get("resource", {})
+        rtype = resource.get("resourceType")
+        if rtype == "Practitioner":
+            for qual in resource.get("qualification", []):
+                role = qual.get("code", {}).get("text", "").strip().lower()
+                if role:
+                    roles.add(role)
+        elif rtype == "CareTeam":
+            for participant in resource.get("participant", []):
+                for role_obj in participant.get("role", []):
+                    role = role_obj.get("text", "").strip().lower()
+                    if role:
+                        roles.add(role)
+    return roles
+
+
+def _role_grants_from_bundle(bundle: dict) -> list[RoleGrant]:
+    grants: list[RoleGrant] = []
+    for role in sorted(_roles_from_bundle(bundle)):
+        for label in _ROLE_GRANT_POLICY.get(role, []):
+            grants.append(RoleGrant(role=role, label=label))
+    return grants
 
 
 def _chunks_from_document(doc: dict, presidio_analyzer) -> list[ChunkRecord]:
@@ -49,11 +71,12 @@ def _chunks_from_document(doc: dict, presidio_analyzer) -> list[ChunkRecord]:
         if not raw_b64:
             continue
         text = base64.b64decode(raw_b64).decode("utf-8")
-        base = synthea_base_labels(text, patient_id, fhir_codes)
-        presidio = presidio_phi_labels(text, patient_id, presidio_analyzer)
-        labels = merge_labels(base, presidio)
         parent = f"synthea-{doc_id}"
-        for i, piece in enumerate(split_text(text)):
+        # Per-chunk labels (split at sensitivity boundaries within the same parent_doc_id).
+        for i, piece in enumerate(split_at_boundaries(text)):
+            base = synthea_base_labels(piece, patient_id, fhir_codes)
+            presidio = presidio_phi_labels(piece, patient_id, presidio_analyzer)
+            labels = merge_labels(base, presidio, wikidoc_topic_labels(piece))
             out.append(
                 ChunkRecord(
                     chunk_id=f"{parent}-c{i}",

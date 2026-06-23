@@ -53,10 +53,15 @@ python scripts/demo_arc.py --gateway http://127.0.0.1:8080
 | P4 | Ollama embed/gen, stats counters |
 | P5 | HTTP routes, audit hash-chain |
 | P6 | scripts/demo_arc.py |
+| — | parent-doc re-gate (`ExpandParentDocs`) |
 
-## Stretch / not full DECISION scope
+## Later (explicit deferrals)
 
-- B2 post-filter harness, parent-doc re-gate, Anthropic frontier
+- **B2 post-filter harness** — simulated secure-RAG baseline (buffer + post-filter + rerank cost)
+- **Anthropic frontier** — external API tier for de-identified chunks (M1 uses Ollama llama3.2)
+
+## Stretch
+
 - Larger Synthea bundles / live HF pulls beyond M1 demo limits
 
 ## Env
