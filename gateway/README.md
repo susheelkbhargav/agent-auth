@@ -1,40 +1,49 @@
-# gateway — Production Identity Gateway (scaffold)
+# gateway — Production Identity Gateway
 
-Go implementation of the production design in [`../DECISION.md`](../DECISION.md). This is the
-trusted core: it proves identity cryptographically, computes authorization deterministically,
-pre-filters retrieval at the engine layer, meters tokens, and audits — all before any LLM runs.
+Go trusted core per [`../IMPLEMENTATION.md`](../IMPLEMENTATION.md) (design of record) and
+[`../DECISION.md`](../DECISION.md) (thesis rationale).
 
-**Status:** directory scaffold + per-package responsibility docs. No Go code yet — see
-`DECISION.md` and run `writing-plans` to produce the implementation plan.
+**Status:** P0 foundation landed — sqlite-vec migrations, `PrefilterTopK` / `ShadowTopK`, meter
+algebra, in-memory nonce store. HTTP pipeline, verify, ingest, audit, and gen still TODO.
+See [`../context.md`](../context.md) for session handoff.
 
 ## Module
 
-`module github.com/agent-auth/gateway` (Go 1.22). Build once code lands: `go build ./...`.
+`module github.com/agent-auth/gateway` (Go 1.25+). Requires **CGO** for sqlite-vec:
 
-## Component map (→ DECISION.md)
+```bash
+cd gateway && CGO_ENABLED=1 go test ./... && CGO_ENABLED=1 go build ./...
+```
 
-| Package | Responsibility | DECISION.md section |
+## Component map
+
+| Package | Responsibility | Status |
 |---|---|---|
-| `cmd/gateway` | wire-up, listen, run migrations, `audit.Verify(n)` at boot | Component layout |
-| `cmd/ingest` | OFFLINE: chunk → label → embed → load Chroma + ACL store | Ingest & ACL store |
-| `internal/httpapi` | routes; error → `403 {}` or unified refusal; no counts to agent | HTTP contracts |
-| `internal/verify` | `VerifyOBO`, `VerifyPoP` (DPoP: `htm/htu/ath/jti` + body hash), nonce+clock (Redis) | Identity boundary |
-| `internal/resolve` | `Effective(...)` — PURE, table-tested lattice **meet**; `required ⊑ effective` | Authorization core |
-| `internal/acl` | `grants(role)`, `agentScope(kid)`, revocation; reads ACL store | Authorization core |
-| `internal/embed` | `Embedder` iface — embeds the **query at request time** | Retrieval (NEED-NOW) |
-| `internal/retrieve` | `Retriever` iface + Chroma impl: `PrefilterTopK`, `ShadowTopK` | Retrieval & meter |
-| `internal/meter` | would-be vs auth tokens, savings%, `leaks_blocked`, `$` (B1/B2 baselines) | Thesis math / meter |
-| `internal/route` | sensitivity-gated egress: empty→refuse · phi→local · else→frontier | Routing (egress) |
-| `internal/audit` | `Append` (hash-chain), `Verify(n)` | Audit & fail-closed |
-| `internal/store` | SQLite (ACL + audit), Redis/Valkey (nonce/session/ratelimit) | Stack |
-| `internal/labelvocab` | FHIR label constants + `LabelSet` set-ops (meet, dominance) | Label model |
-| `pylib/agent_auth` | ~50-line PyNaCl client: signs requests, calls the gateway | Component layout |
-| `ingestlib` | OFFLINE python: Synthea loader + Presidio labeler (not on request path) | Ingest & ACL store |
+| `cmd/gateway` | Open `APP_DB`, migrate, listen | DB boot only |
+| `cmd/ingest` | OFFLINE Go stub | TODO — use Python `ingestlib` |
+| `internal/httpapi` | 4 routes, unified refusal | Stub router |
+| `internal/verify` | DPoP + OBO + nonce | Types only |
+| `internal/resolve` | `Effective(...)` meet | **Done** |
+| `internal/acl` | grants / agentScope / revocation | Interface only |
+| `internal/embed` | Query-time Ollama embed | Interface only |
+| `internal/retrieve` | `SQLiteRetriever` prefilter + shadow | **Done** |
+| `internal/meter` | `Compute`, `TierForShadow` | **Done** |
+| `internal/route` | `IsRestricted` egress tier | **Done** |
+| `internal/audit` | Hash-chain append/verify | Interface only |
+| `internal/store` | SQLite schema + **`MemNonceStore`** | **Done** |
+| `internal/labelvocab` | Labels, dominance, egress family | **Done** |
+| `ingestlib` | Python offline ingest | Not started |
+| `pylib/agent_auth` | PyNaCl signer | Not started |
 
-## Invariants (do not violate)
+## Stack notes (IMPLEMENTATION overrides DECISION)
 
-- Authorization (`resolve` + `required ⊑ effective`) is **pure, deterministic, trusted code**.
-  The LLM never participates in its own access decision.
-- `Retriever` receives **only** the effective label set — never identity, intent, or model output.
+- **Vector store:** sqlite-vec in `app.db` — not Chroma.
+- **Nonce replay:** in-memory `MemNonceStore` — **not Redis**.
+- **Rate-limit / session:** not implemented (single-node demo).
+
+## Invariants
+
+- Authorization is pure trusted code; LLM never participates in access decisions.
+- `Retriever` receives **only** effective labels.
 - Pre-filter is **engine-level** (before ANN), never post-filter.
-- **Fail-closed** everywhere; audit-append failure → deny the request.
+- Audit append failure → deny request.

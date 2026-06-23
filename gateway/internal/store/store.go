@@ -1,6 +1,6 @@
-// Package store holds the storage backends: SQLite (ACL + audit) and Redis/Valkey
-// (nonce/session/ratelimit). Parameterized queries only. Distributed-ready, single-node local.
-// See ../../DECISION.md (Stack).
+// Package store holds SQLite (app.db: ACL, audit, chunks, vectors) and in-memory
+// nonce replay protection. Parameterized queries only. NonceStore is swappable
+// (Redis/Valkey later for multi-node). See ../../IMPLEMENTATION.md and ../../DECISION.md.
 package store
 
 import "context"

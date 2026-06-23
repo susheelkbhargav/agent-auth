@@ -91,7 +91,7 @@ merits regardless of the savings number it produces.
 | Retriever seam | **Go `Retriever` interface** — `PrefilterTopK(q, effLabels, k)` + `ShadowTopK(q, k)` | swap vector store = new impl, callers unchanged; receives ONLY effective labels → cannot be injection-steered |
 | Vector store | **ChromaDB** behind `Retriever`, engine `where` pre-filter | proven in MVP; tiny footprint. Swap → Qdrant/pgvector at scale |
 | ACL source of truth | **external ACL store** (SQLite), labels keyed by chunk id | corpus has no native ACL (see below). Enterprise → live FHIR security-label sync + TTL |
-| State | **Redis/Valkey** local — nonce, session, rate-limit | distributed-ready code, single-node local |
+| State | **In-memory nonce** (single-node); IMPLEMENTATION: `MemNonceStore`, not Redis | zero extra services on M1; Redis/Valkey later behind `NonceStore` |
 | Audit + relational | **SQLite** (ACL + hash-chained audit) | append-only; enterprise → HA audit + anchored root |
 
 ## Identity boundary (the showpiece)
@@ -206,7 +206,7 @@ signed OBO, `task_scope` capped by OBO). Meet is monotone + every operand is adv
 cmd/gateway/main.go   wire-up, listen, migrations, audit.Verify(n) at boot
 cmd/ingest/main.go    OFFLINE: chunk → label → embed → load Chroma + ACL store
 internal/httpapi  routes; error → 403 {} or unified refusal; no counts to agent
-internal/verify   VerifyOBO, VerifyPoP(idPoP), nonce+clock (Redis); single error → deny
+internal/verify   VerifyOBO, VerifyPoP(DPoP), nonce+clock (in-memory NonceStore); single error → deny
 internal/resolve  Effective(...) LabelSet — PURE, table-tested
 internal/acl      grants(role), agentScope(kid), revocation
 internal/embed    [NEED-NOW] Embedder iface — embeds the QUERY at request time (was missing!)
@@ -214,14 +214,14 @@ internal/retrieve Retriever iface + chroma impl: PrefilterTopK, ShadowTopK
 internal/meter    would_be vs auth, savings%, leaks_blocked, $
 internal/route    sensitivity gate
 internal/audit    Append (hash-chain), Verify(n)
-internal/store    SQLite (ACL+audit), Redis (nonce/session/ratelimit)
+internal/store    SQLite (ACL+audit+chunks+vec); in-memory nonce (MemNonceStore)
 internal/labelvocab  FHIR constants + LabelSet set-ops
 pylib/agent_auth     ~50-line PyNaCl sign client
 ingestlib            OFFLINE python: Synthea loader + Presidio labeler
 ```
 
 **[NEED-NOW] M1 8GB runtime budget — one Ollama for both embed + gen.** Don't run
-sentence-transformers + Ollama + Chroma + Redis + Go at once (>3GB → swap mid-demo). Use a single
+sentence-transformers + Ollama + Chroma + extra services + Go at once (>3GB → swap mid-demo). Use a single
 Ollama runtime: `nomic-embed-text` (embed) + `phi4-mini` (gen), one memory pool, Go calls both over
 HTTP. **Re-embed the corpus with the same model used at query time** (MVP uses MiniLM — fine, but
 then MiniLM must serve query-time too). Hide the choice behind the `Embedder` interface so the
