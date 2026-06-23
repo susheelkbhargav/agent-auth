@@ -7,7 +7,10 @@
 // See ../../DECISION.md (Authorization core).
 package labelvocab
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 // Label is a single authorization label (FHIR security label or category).
 type Label string
@@ -120,4 +123,14 @@ func IsRestricted(l Label) bool {
 		return true
 	}
 	return strings.HasPrefix(s, "sud:")
+}
+
+// Strings returns sorted label strings for SQL IN clauses.
+func (s LabelSet) Strings() []string {
+	out := make([]string, 0, len(s))
+	for l := range s {
+		out = append(out, string(l))
+	}
+	sort.Strings(out)
+	return out
 }

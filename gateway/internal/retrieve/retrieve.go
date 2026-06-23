@@ -27,7 +27,7 @@ type ChunkMeta struct {
 	RequiredLabels labelvocab.LabelSet
 }
 
-// Retriever is the vector-store seam. Chroma is one impl; swap to Qdrant/pgvector later.
+// Retriever is the vector-store seam. SQLiteRetriever (sqlite-vec) is the default impl.
 type Retriever interface {
 	// PrefilterTopK filters required ⊆ eff BEFORE ANN, then returns cosine top-k survivors.
 	PrefilterTopK(ctx context.Context, q []float32, eff labelvocab.LabelSet, k int) ([]Chunk, error)

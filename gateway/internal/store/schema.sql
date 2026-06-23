@@ -81,7 +81,13 @@ INSERT OR IGNORE INTO stats_counters (id) VALUES (1);
 --     WHERE req.chunk_id = c.id
 --       AND req.label NOT IN (/* eff labels */)
 --   )
---   ORDER BY vec_distance_cosine(v.embedding, ?) ASC
---   LIMIT ?;
+--   WHERE v.embedding MATCH ?
+--     AND k = ?
+--     AND NOT EXISTS (
+--     SELECT 1 FROM chunk_labels req
+--     WHERE req.chunk_id = c.id
+--       AND req.label NOT IN (/* eff labels */)
+--   )
+--   ORDER BY v.distance;
 --
 -- ShadowTopK (meter B1 baseline): same ORDER BY, no label WHERE, SELECT metadata only.
