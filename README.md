@@ -13,7 +13,7 @@ and cost (context tokens). Getting more secure makes you cheaper.
 | [`DESIGN.md`](DESIGN.md) | original thesis + hackathon design | reference |
 | [`DECISION.md`](DECISION.md) | production design decisions (all axes), triaged | reference |
 | [`mvp/`](mvp/) | **proof-of-mechanism** — Python RAG with engine-level pre-filter | working, frozen |
-| [`gateway/`](gateway/) | **production build** — Go identity gateway per `DECISION.md` | scaffold |
+| [`gateway/`](gateway/) | **production build** — Go identity gateway per `DECISION.md` | P0–P6 wired |
 
 ## The two halves
 

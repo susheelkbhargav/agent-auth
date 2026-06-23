@@ -3,9 +3,9 @@
 Go trusted core per [`../IMPLEMENTATION.md`](../IMPLEMENTATION.md) (design of record) and
 [`../DECISION.md`](../DECISION.md) (thesis rationale).
 
-**Status:** P0 foundation landed — sqlite-vec migrations, `PrefilterTopK` / `ShadowTopK`, meter
-algebra, in-memory nonce store. HTTP pipeline, verify, ingest, audit, and gen still TODO.
-See [`../context.md`](../context.md) for session handoff.
+**Status:** P0–P6 landed — sqlite-vec prefilter, verify, ACL, ingest seed, Ollama embed/gen,
+HTTP routes, audit hash-chain, stats, and demo arc. See [`../context.md`](../context.md) for
+session handoff and bootstrap.
 
 ## Module
 
@@ -19,21 +19,24 @@ cd gateway && CGO_ENABLED=1 go test ./... && CGO_ENABLED=1 go build ./...
 
 | Package | Responsibility | Status |
 |---|---|---|
-| `cmd/gateway` | Open `APP_DB`, migrate, listen | DB boot only |
-| `cmd/ingest` | OFFLINE Go stub | TODO — use Python `ingestlib` |
-| `internal/httpapi` | 4 routes, unified refusal | Stub router |
-| `internal/verify` | DPoP + OBO + nonce | Types only |
+| `cmd/gateway` | Open `APP_DB`, migrate, listen | **Done** |
+| `cmd/ingest` | OFFLINE demo corpus + ACL seed | **Done** |
+| `cmd/keygen` | Demo Ed25519 key material | **Done** |
+| `internal/httpapi` | 4 routes, unified refusal | **Done** |
+| `internal/verify` | DPoP + OBO + nonce | **Done** |
 | `internal/resolve` | `Effective(...)` meet | **Done** |
-| `internal/acl` | grants / agentScope / revocation | Interface only |
-| `internal/embed` | Query-time Ollama embed | Interface only |
+| `internal/acl` | grants / agentScope / revocation | **Done** |
+| `internal/embed` | Query-time Ollama embed | **Done** |
+| `internal/gen` | Local + frontier Ollama gen | **Done** |
 | `internal/retrieve` | `SQLiteRetriever` prefilter + shadow | **Done** |
 | `internal/meter` | `Compute`, `TierForShadow` | **Done** |
 | `internal/route` | `IsRestricted` egress tier | **Done** |
-| `internal/audit` | Hash-chain append/verify | Interface only |
+| `internal/audit` | Hash-chain append/verify | **Done** |
+| `internal/stats` | Cumulative KPI counters | **Done** |
 | `internal/store` | SQLite schema + **`MemNonceStore`** | **Done** |
 | `internal/labelvocab` | Labels, dominance, egress family | **Done** |
-| `ingestlib` | Python offline ingest | Not started |
-| `pylib/agent_auth` | PyNaCl signer | Not started |
+| `ingestlib` | Python wrapper → `cmd/ingest` | **Done** |
+| `pylib/agent_auth` | PyNaCl signer client | **Done** |
 
 ## Stack notes (IMPLEMENTATION overrides DECISION)
 

@@ -12,3 +12,5 @@ venv/
 *.test
 *.out
 /gateway/bin/
+/gateway/app.db
+/gateway/demo/keys/

@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "pylib"))
+sys.path.insert(0, str(ROOT / "gateway" / "pylib"))
 
 from agent_auth.client import AgentClient  # noqa: E402
 
