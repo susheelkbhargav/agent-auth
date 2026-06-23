@@ -14,18 +14,15 @@ const (
 	Frontier             // all de-identified/public → frontier permitted
 )
 
-// Restricted labels force local-only processing. Extend as the vocabulary grows.
-var restricted = labelvocab.New("phi", "restricted")
-
-// Decide returns the egress tier for the authorized chunk labels. Fail-closed: unknown
-// sensitivity is treated as restricted by the caller before reaching here.
+// Decide returns the egress tier for the authorized chunk labels. Fail-closed: any
+// PHI-family or restricted label → local model only (BAA boundary).
 func Decide(authorized []labelvocab.LabelSet) Tier {
 	if len(authorized) == 0 {
 		return Refuse
 	}
 	for _, chunk := range authorized {
 		for l := range chunk {
-			if restricted.Contains(l) {
+			if labelvocab.IsRestricted(l) {
 				return Local
 			}
 		}

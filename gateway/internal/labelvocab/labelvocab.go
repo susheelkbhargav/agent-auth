@@ -7,6 +7,8 @@
 // See ../../DECISION.md (Authorization core).
 package labelvocab
 
+import "strings"
+
 // Label is a single authorization label (FHIR security label or category).
 type Label string
 
@@ -92,4 +94,30 @@ func confIndex(l Label) int {
 		}
 	}
 	return -1
+}
+
+// Union returns the set union of s and other (used to merge grants across roles).
+func (s LabelSet) Union(other LabelSet) LabelSet {
+	out := make(LabelSet, len(s)+len(other))
+	for l := range s {
+		out[l] = struct{}{}
+	}
+	for l := range other {
+		out[l] = struct{}{}
+	}
+	return out
+}
+
+// IsRestricted reports whether a label forces local-only model egress (BAA boundary).
+// Authz uses exact Dominates; egress uses this broader PHI/sensitivity family rule.
+func IsRestricted(l Label) bool {
+	s := string(l)
+	if s == "restricted" || s == "phi" || strings.HasPrefix(s, "phi:") {
+		return true
+	}
+	switch l {
+	case "note:provider", "note:psych", "genetic", "hiv":
+		return true
+	}
+	return strings.HasPrefix(s, "sud:")
 }
