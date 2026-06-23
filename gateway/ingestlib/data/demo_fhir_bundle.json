@@ -1,0 +1,214 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "alice",
+        "name": [
+          {
+            "text": "Alice Provider"
+          }
+        ],
+        "qualification": [
+          {
+            "code": {
+              "text": "provider"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "carol",
+        "name": [
+          {
+            "text": "Carol Billing"
+          }
+        ],
+        "qualification": [
+          {
+            "code": {
+              "text": "billing"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "bob",
+        "name": [
+          {
+            "given": [
+              "Bob"
+            ],
+            "family": "Patient"
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "CareTeam",
+        "id": "care-alice",
+        "participant": [
+          {
+            "role": [
+              {
+                "text": "provider"
+              }
+            ],
+            "member": {
+              "reference": "Practitioner/alice"
+            }
+          }
+        ],
+        "subject": {
+          "reference": "Patient/bob"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "CareTeam",
+        "id": "care-carol",
+        "participant": [
+          {
+            "role": [
+              {
+                "text": "billing"
+              }
+            ],
+            "member": {
+              "reference": "Practitioner/carol"
+            }
+          }
+        ],
+        "subject": {
+          "reference": "Patient/bob"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "phi-dx1",
+        "status": "current",
+        "subject": {
+          "reference": "Patient/bob"
+        },
+        "meta": {
+          "security": [
+            {
+              "code": "R"
+            }
+          ]
+        },
+        "type": {
+          "text": "Clinical Note"
+        },
+        "description": "Diagnosis note",
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "RGlhZ25vc2lzOiBUeXBlIDIgZGlhYmV0ZXMgd2l0aCByZWNvbW1lbmRlZCBtZXRmb3JtaW4gdGhlcmFweS4="
+            }
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "phi-dx2",
+        "status": "current",
+        "subject": {
+          "reference": "Patient/bob"
+        },
+        "meta": {
+          "security": [
+            {
+              "code": "R"
+            }
+          ]
+        },
+        "type": {
+          "text": "Assessment"
+        },
+        "description": "Hypertension assessment",
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "QXNzZXNzbWVudCBub3RlcyBjaHJvbmljIGh5cGVydGVuc2lvbiByZXF1aXJpbmcgbWVkaWNhdGlvbiBhZGp1c3RtZW50Lg=="
+            }
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "note-p1",
+        "status": "current",
+        "subject": {
+          "reference": "Patient/bob"
+        },
+        "meta": {
+          "security": [
+            {
+              "code": "V"
+            }
+          ]
+        },
+        "type": {
+          "text": "Provider Note"
+        },
+        "description": "Provider private note",
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "UHJvdmlkZXIgcHJpdmF0ZSBub3RlOiBwYXRpZW50IEJvYiBleHByZXNzZWQgYW54aWV0eSBhYm91dCB0cmVhdG1lbnQgcGxhbi4="
+            }
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "phi-bob1",
+        "status": "current",
+        "subject": {
+          "reference": "Patient/bob"
+        },
+        "meta": {
+          "security": [
+            {
+              "code": "R"
+            }
+          ]
+        },
+        "type": {
+          "text": "Patient Chart"
+        },
+        "description": "Bob follow-up",
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "Qm9iIHBhdGllbnQgY2hhcnQ6IGZvbGxvdy11cCBsYWJzIHNjaGVkdWxlZCBuZXh0IHdlZWsu"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

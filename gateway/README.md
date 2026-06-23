@@ -20,7 +20,9 @@ cd gateway && CGO_ENABLED=1 go test ./... && CGO_ENABLED=1 go build ./...
 | Package | Responsibility | Status |
 |---|---|---|
 | `cmd/gateway` | Open `APP_DB`, migrate, listen | **Done** |
-| `cmd/ingest` | OFFLINE demo corpus + ACL seed | **Done** |
+| `cmd/ingest` | Delegates to Python `ingestlib` | **Done** |
+| `cmd/dbinit` | Migrate `app.db` + sqlite-vec | **Done** |
+| `cmd/vecwrite` | Bulk `chunk_vec` INSERTs from NDJSON | **Done** |
 | `cmd/keygen` | Demo Ed25519 key material | **Done** |
 | `internal/httpapi` | 4 routes, unified refusal | **Done** |
 | `internal/verify` | DPoP + OBO + nonce | **Done** |
@@ -35,7 +37,7 @@ cd gateway && CGO_ENABLED=1 go test ./... && CGO_ENABLED=1 go build ./...
 | `internal/stats` | Cumulative KPI counters | **Done** |
 | `internal/store` | SQLite schema + **`MemNonceStore`** | **Done** |
 | `internal/labelvocab` | Labels, dominance, egress family | **Done** |
-| `ingestlib` | Python wrapper → `cmd/ingest` | **Done** |
+| `ingestlib` | WikiDoc + Synthea + Presidio + Ollama embed | **Done** |
 | `pylib/agent_auth` | PyNaCl signer client | **Done** |
 
 ## Stack notes (IMPLEMENTATION overrides DECISION)

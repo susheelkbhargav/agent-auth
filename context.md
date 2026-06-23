@@ -29,8 +29,10 @@ ollama pull nomic-embed-text phi4-mini
 
 # Terminal 2
 cd gateway
+pip install -r ingestlib/requirements.txt
+python -m spacy download en_core_web_sm
 go run ./cmd/keygen -out ./demo/keys
-go run ./cmd/ingest -app-db ./app.db -keys ./demo/keys
+python ingestlib/ingest.py --app-db ./app.db --keys ./demo/keys
 export ISSUER_PUBKEY_PATH=./demo/keys/issuer_pub.raw
 export APP_DB=./app.db
 go run ./cmd/gateway
@@ -47,15 +49,15 @@ python scripts/demo_arc.py --gateway http://127.0.0.1:8080
 | P0 | sqlite-vec, PrefilterTopK, ShadowTopK |
 | P1 | StandardVerifier, MemNonceStore, pylib signer |
 | P2 | acl SQLite, grants union, revocation |
-| P3 | cmd/ingest demo seed, ingestlib wrapper |
+| P3 | ingestlib: WikiDoc + Synthea + Presidio + Ollama; Go vecwrite |
 | P4 | Ollama embed/gen, stats counters |
 | P5 | HTTP routes, audit hash-chain |
 | P6 | scripts/demo_arc.py |
 
 ## Stretch / not full DECISION scope
 
-- Full HF WikiDoc + Synthea + Presidio pipeline (demo uses Go seed chunks)
 - B2 post-filter harness, parent-doc re-gate, Anthropic frontier
+- Larger Synthea bundles / live HF pulls beyond M1 demo limits
 
 ## Env
 
