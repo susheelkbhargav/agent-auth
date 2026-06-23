@@ -1,0 +1,14 @@
+# MVP generated vector DB (regenerated each run)
+mvp/afr_local_db/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Go
+*.exe
+*.test
+*.out
+/gateway/bin/

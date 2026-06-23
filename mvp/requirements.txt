@@ -1,0 +1,9 @@
+# Dependencies for afr_mvp.py (derived from its imports).
+# Pin versions if you need reproducibility; left loose for the MVP.
+# Also requires Ollama running locally with `phi4-mini` (not a pip package):
+#   ollama serve && ollama pull phi4-mini
+chromadb
+sentence-transformers
+langchain-text-splitters
+datasets
+requests
