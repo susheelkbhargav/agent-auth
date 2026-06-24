@@ -6,6 +6,14 @@ and cost (context tokens). Getting more secure makes you cheaper.
 
 > The forbidden chunk you don't retrieve is the leak you don't suffer **and** the token you don't pay.
 
+## Architecture & Flow
+
+### Data Ingestion
+![Ingestion Flow](./ingestion.png)
+
+### Token Delegation (OBO + DPoP)
+![Token Delegation Flow](./token_delegation_flow.svg)
+
 ## Repo layout
 
 | Path | What |
