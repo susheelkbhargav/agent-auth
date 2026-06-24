@@ -8,12 +8,10 @@ and cost (context tokens). Getting more secure makes you cheaper.
 
 ## Repo layout
 
-| Path | What | Status |
+| Path | What |
 |---|---|---|
-| [`DESIGN.md`](DESIGN.md) | original thesis + hackathon design | reference |
-| [`DECISION.md`](DECISION.md) | production design decisions (all axes), triaged | reference |
-| [`mvp/`](mvp/) | **proof-of-mechanism** — Python RAG with engine-level pre-filter | working, frozen |
-| [`gateway/`](gateway/) | **production build** — Go identity gateway per `DECISION.md` | P0–P6 wired |
+| [`mvp/`](mvp/) | **proof-of-mechanism** — Python RAG with engine-level pre-filter 
+| [`gateway/`](gateway/) | **production build** — Go identity gateway |
 
 ## The two halves
 
@@ -24,7 +22,6 @@ and cost (context tokens). Getting more secure makes you cheaper.
   deterministic `U ∩ A ∩ T` authz in trusted code, engine-level pre-filter, token meter,
   hash-chained audit, fail-closed. See [`gateway/README.md`](gateway/README.md).
 
-Start with `DECISION.md` for the full rationale.
 
 ## Running Locally
 
@@ -71,3 +68,4 @@ If you prefer to run the steps individually, run them from the `gateway` directo
    export APP_DB=./app.db
    CGO_ENABLED=1 go run ./cmd/gateway
    ```
+
