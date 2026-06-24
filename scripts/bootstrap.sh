@@ -11,6 +11,10 @@ go run ./cmd/keygen -out ./demo/keys
 echo "==> ingest deps"
 pip install -r ingestlib/requirements.txt
 python -m spacy download en_core_web_sm 2>/dev/null || true
+
+echo "==> pulling ollama models"
+ollama pull nomic-embed-text
+
 echo "==> ingest (WikiDoc + Synthea + Presidio + Ollama)"
 python ingestlib/ingest.py --app-db ./app.db --keys ./demo/keys --ollama "${OLLAMA_URL:-http://127.0.0.1:11434}"
 

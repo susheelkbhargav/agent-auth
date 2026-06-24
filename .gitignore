@@ -14,3 +14,6 @@ venv/
 /gateway/bin/
 /gateway/app.db
 /gateway/demo/keys/
+
+# Vector dump
+/gateway/app.vectors.ndjson

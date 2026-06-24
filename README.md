@@ -25,3 +25,49 @@ and cost (context tokens). Getting more secure makes you cheaper.
   hash-chained audit, fail-closed. See [`gateway/README.md`](gateway/README.md).
 
 Start with `DECISION.md` for the full rationale.
+
+## Running Locally
+
+### Prerequisites
+
+Before running, ensure you have the following installed and running:
+
+* **[Go 1.25+](https://go.dev/doc/install)** (with CGO enabled, as the `sqlite-vec` extension requires it)
+* **[Python & pip](https://www.python.org/downloads/)** (for the ingest scripts)
+* **[Ollama](https://ollama.com/)** running locally on your machine (the ingest script defaults to `http://127.0.0.1:11434`)
+
+### Automated Bootstrap (Recommended)
+
+You can run the entire setup (keys, data ingest, gateway start) in one go using the bootstrap script from the root of the repository:
+
+```bash
+./scripts/bootstrap.sh
+```
+
+### Manual Setup
+
+If you prefer to run the steps individually, run them from the `gateway` directory:
+
+1. **Generate Keys:**
+   ```bash
+   cd gateway
+   go run ./cmd/keygen -out ./demo/keys
+   ```
+
+2. **Install Ingest Dependencies:**
+   ```bash
+   pip install -r ingestlib/requirements.txt
+   python -m spacy download en_core_web_sm
+   ```
+
+3. **Run Data Ingest:**
+   ```bash
+   python ingestlib/ingest.py --app-db ./app.db --keys ./demo/keys --ollama "http://127.0.0.1:11434"
+   ```
+
+4. **Start the Gateway:**
+   ```bash
+   export ISSUER_PUBKEY_PATH=./demo/keys/issuer_pub.raw
+   export APP_DB=./app.db
+   CGO_ENABLED=1 go run ./cmd/gateway
+   ```

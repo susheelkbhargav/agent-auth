@@ -14,6 +14,7 @@ _DATA = Path(__file__).resolve().parent / "data" / "demo_fhir_bundle.json"
 _ROLE_GRANT_POLICY: dict[str, list[str]] = {
     "provider": ["phi", "prescription", "lab", "note:provider"],
     "billing": ["billing", "scheduling"],
+    "patient": ["phi:patient:bob", "conf:R"],
 }
 
 
@@ -47,6 +48,8 @@ def _roles_from_bundle(bundle: dict) -> set[str]:
                     role = role_obj.get("text", "").strip().lower()
                     if role:
                         roles.add(role)
+        elif rtype == "Patient":
+            roles.add("patient")
     return roles
 
 
@@ -76,7 +79,7 @@ def _chunks_from_document(doc: dict, presidio_analyzer) -> list[ChunkRecord]:
         for i, piece in enumerate(split_at_boundaries(text)):
             base = synthea_base_labels(piece, patient_id, fhir_codes)
             presidio = presidio_phi_labels(piece, patient_id, presidio_analyzer)
-            labels = merge_labels(base, presidio, wikidoc_topic_labels(piece))
+            labels = merge_labels(base, presidio)
             out.append(
                 ChunkRecord(
                     chunk_id=f"{parent}-c{i}",

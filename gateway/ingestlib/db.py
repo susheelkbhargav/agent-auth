@@ -23,9 +23,9 @@ def write_sqlite(app_db: Path, batch: IngestBatch) -> None:
 def seed_agent_scopes(app_db: Path, keys_dir: Path) -> None:
     """Register demo agent scopes from Ed25519 pub keys (same as legacy Go ingest)."""
     scopes = {
-        "doctor": ["phi", "prescription", "lab", "note:provider", "scheduling"],
+        "doctor": ["phi", "prescription", "lab", "note:provider", "scheduling", "phi:patient:bob", "conf:R", "conf:V"],
         "billing": ["billing", "scheduling"],
-        "patient": ["phi:patient:bob", "scheduling", "billing:patient:bob"],
+        "patient": ["phi:patient:bob", "scheduling", "billing:patient:bob", "conf:R"],
     }
     conn = sqlite3.connect(app_db)
     try:

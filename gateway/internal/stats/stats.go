@@ -37,9 +37,16 @@ func Read(db *sql.DB) (Snapshot, error) {
 	if err != nil {
 		return s, err
 	}
-	s.DollarsSaved = dollars
+	if dollars < 0 {
+		s.DollarsSaved = 0
+	} else {
+		s.DollarsSaved = dollars
+	}
 	if wouldBe > 0 {
 		s.TokensSavedPct = float64(wouldBe-auth) / float64(wouldBe) * 100
+		if s.TokensSavedPct < 0 {
+			s.TokensSavedPct = 0
+		}
 	}
 	return s, nil
 }
