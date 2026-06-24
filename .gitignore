@@ -17,3 +17,6 @@ venv/
 
 # Vector dump
 /gateway/app.vectors.ndjson
+
+# macOS
+.DS_Store
