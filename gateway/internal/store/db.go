@@ -51,6 +51,11 @@ func (db *DB) Migrate() error {
 	}
 	for i, stmt := range splitStatements(string(raw)) {
 		if _, err := db.SQL.Exec(stmt); err != nil {
+			// ADD COLUMN migrations are not idempotent in SQLite; on an already-upgraded DB
+			// they fail with "duplicate column name". Treat that as a no-op.
+			if strings.Contains(err.Error(), "duplicate column name") {
+				continue
+			}
 			return fmt.Errorf("migrate stmt %d: %w", i+1, err)
 		}
 	}

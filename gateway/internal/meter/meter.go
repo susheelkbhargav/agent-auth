@@ -23,6 +23,12 @@ type Result struct {
 	LeaksBlocked  int
 	SavingsPct    float64
 	DollarsSaved  float64
+	// EmptySet is true when the authorized set was empty (deterministic refusal at 0 LLM
+	// tokens) — the dominant real-world win, tracked separately for empty_set_rate.
+	EmptySet bool
+	// DowngradeDollars isolates the tier-downgrade saving: same authorized token volume,
+	// but routed to a cheaper tier than the naive baseline would have forced.
+	DowngradeDollars float64
 }
 
 // Compute fills Result from shadow (B1 naive top-k metadata) vs authorized chunks.
@@ -46,12 +52,20 @@ func Compute(shadow []retrieve.ChunkMeta, auth []retrieve.Chunk, eff labelvocab.
 		savings = float64(wouldBe-authTok) / float64(wouldBe) * 100
 	}
 	dollars := pricePer1K(tierNaive)*float64(wouldBe)/1000 - pricePer1K(tier)*float64(authTok)/1000
+	// Tier-downgrade saving: hold the authorized token volume fixed, price the gap between the
+	// tier the naive baseline would have forced and the tier actually used. Clamp at 0.
+	downgrade := pricePer1K(tierNaive)*float64(authTok)/1000 - pricePer1K(tier)*float64(authTok)/1000
+	if downgrade < 0 {
+		downgrade = 0
+	}
 	return Result{
-		WouldBeTokens: wouldBe,
-		AuthTokens:    authTok,
-		LeaksBlocked:  leaks,
-		SavingsPct:    savings,
-		DollarsSaved:  dollars,
+		WouldBeTokens:    wouldBe,
+		AuthTokens:       authTok,
+		LeaksBlocked:     leaks,
+		SavingsPct:       savings,
+		DollarsSaved:     dollars,
+		EmptySet:         len(auth) == 0,
+		DowngradeDollars: downgrade,
 	}
 }
 

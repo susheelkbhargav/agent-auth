@@ -65,10 +65,27 @@ CREATE TABLE IF NOT EXISTS stats_counters (
   leaks_blocked     INTEGER NOT NULL DEFAULT 0,
   would_be_tokens   INTEGER NOT NULL DEFAULT 0,
   auth_tokens       INTEGER NOT NULL DEFAULT 0,
-  dollars_saved     REAL    NOT NULL DEFAULT 0.0
+  dollars_saved     REAL    NOT NULL DEFAULT 0.0,
+  total_requests    INTEGER NOT NULL DEFAULT 0,  -- denominator for empty_set_rate
+  empty_set_count   INTEGER NOT NULL DEFAULT 0,  -- authorized set empty → 0 LLM tokens
+  tier_downgrades   INTEGER NOT NULL DEFAULT 0,  -- naive frontier → actual local/refuse
+  downgrade_dollars REAL    NOT NULL DEFAULT 0.0  -- $ saved by tier downgrade alone
 );
 
 INSERT OR IGNORE INTO stats_counters (id) VALUES (1);
+
+-- Idempotent upgrades for app.db files created before the KPI split. SQLite has no
+-- ADD COLUMN IF NOT EXISTS; Migrate tolerates the "duplicate column name" error on re-run.
+ALTER TABLE stats_counters ADD COLUMN total_requests    INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE stats_counters ADD COLUMN empty_set_count   INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE stats_counters ADD COLUMN tier_downgrades   INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE stats_counters ADD COLUMN downgrade_dollars REAL    NOT NULL DEFAULT 0.0;
+
+-- Per-request savings_pct samples — enables p50/p90/p99 (token-weighted mean hides the tail).
+CREATE TABLE IF NOT EXISTS request_savings (
+  seq         INTEGER PRIMARY KEY AUTOINCREMENT,
+  savings_pct REAL NOT NULL
+);
 
 -- ── Prefilter query pattern (PrefilterTopK) ─────────────────────────────────
 -- eff_labels = temp table or bound IN-list of effective label strings.

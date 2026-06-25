@@ -61,6 +61,13 @@ def main() -> int:
     keys = Path(args.keys)
     issuer = keys / "issuer_priv.raw"
     
+    # Reset cumulative stats so this run reports clean, non-accumulated numbers.
+    import requests
+    try:
+        requests.post(args.gateway + "/v1/stats/reset", timeout=10)
+    except requests.RequestException as e:
+        print(f"  (warning: stats reset failed: {e})")
+
     # Initialize agents
     doc = AgentClient.from_keys(str(issuer), str(keys / "doctor_priv.raw"), args.gateway)
     bill = AgentClient.from_keys(str(issuer), str(keys / "billing_priv.raw"), args.gateway)

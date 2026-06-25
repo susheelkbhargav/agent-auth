@@ -190,6 +190,20 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, snap)
 }
 
+// handleStatsReset zeroes the cumulative dashboard counters so a fresh demo run reports clean,
+// non-accumulated numbers. POST-only; the demo driver calls it before the arc.
+func (s *Server) handleStatsReset(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		write403(w)
+		return
+	}
+	if err := stats.Reset(s.DB); err != nil {
+		write403(w)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
 func (s *Server) handleAudit(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		write403(w)
