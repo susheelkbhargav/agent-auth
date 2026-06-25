@@ -75,11 +75,11 @@ func (s *Server) handleRetrieve(w http.ResponseWriter, r *http.Request) {
 	grants := acl.GrantsUnion(s.ACL, principal.UserRoles)
 	agentScope := s.ACL.AgentScope(principal.AgentKID)
 	eff := resolve.Effective(grants, agentScope, reqTask, oboTask)
-	if len(eff) == 0 {
-		writeUnifiedRefusal(w)
-		return
-	}
 
+	// Compute the shadow (insecure top-k) baseline BEFORE branching on authorization, so that
+	// hard denials (empty effective set = zero authority) are metered too. They are the
+	// strongest "security = 0 tokens" wins; skipping them undercounts empty_set_rate and
+	// leaks_blocked. Cost: one embed + one shadow ANN per denied query.
 	qVec, err := s.Embedder.Embed(r.Context(), req.Query)
 	if err != nil {
 		writeUnifiedRefusal(w)
@@ -91,6 +91,20 @@ func (s *Server) handleRetrieve(w http.ResponseWriter, r *http.Request) {
 		writeUnifiedRefusal(w)
 		return
 	}
+
+	// Empty effective set: never retrieve (not even public chunks), but record the would-be
+	// leak + 0-token refusal so the dashboard reflects this denial.
+	if len(eff) == 0 {
+		m := meter.Compute(shadow, nil, eff, route.Refuse, meter.TierForShadow(shadow))
+		if err := s.record(r, m, principal, eff, []string{}, route.Refuse); err != nil {
+			write403(w)
+			return
+		}
+		_ = stats.Add(s.DB, m)
+		writeUnifiedRefusal(w)
+		return
+	}
+
 	auth, err := s.Retriever.PrefilterTopK(r.Context(), qVec, eff, k)
 	if err != nil {
 		writeUnifiedRefusal(w)
